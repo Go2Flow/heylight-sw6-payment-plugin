@@ -1,6 +1,6 @@
 {
   "name": "heylight/ecom-shopware",
-  "version": "1.6.0",
+  "version": "1.0.0",
   "description": "HeyLight Shopware 6 Plugin",
   "type": "shopware-platform-plugin",
   "license": "proprietary",
