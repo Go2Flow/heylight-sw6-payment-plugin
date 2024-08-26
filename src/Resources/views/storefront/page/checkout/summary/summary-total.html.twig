@@ -1,0 +1,51 @@
+{% sw_extends '@Storefront/storefront/page/checkout/summary/summary-total.html.twig' %}
+
+{% block page_checkout_summary_total %}
+    {{ parent() }}
+
+    {% if config('Go2FlowHeyLightPayment.settings.heidiPromotionShowOnCart') == 1 %}
+        {% if config('Go2FlowHeyLightPayment.settings.heidiMaximumOrderValue') is empty or config('Go2FlowHeyLightPayment.settings.heidiMaximumOrderValue') >= summary.price.rawTotal %}
+            {% if config('Go2FlowHeyLightPayment.settings.heidiPromotionWidgetMinAmount') <= summary.price.rawTotal %}
+                {% if heidi_best_term(summary.price.rawTotal * 100) %}
+                    {% set heidiPromotionProductMode = config('Go2FlowHeyLightPayment.settings.heidiPromotionProductMode') %}
+                    {% if heidiPromotionProductMode == 0 or heidiPromotionProductMode == 2 %}
+                    <div id="heidipay-container" class="heidipay-container"
+                         data-heidipay="true"
+                         data-heidipay-minorAmount="{{ heidi_add_fee(summary.price.rawTotal * 100) }}"
+                         data-heidipay-term="{{ heidi_best_term(summary.price.rawTotal * 100) }}"
+                         data-heidipay-currencySymbol="{{  page.header.activeCurrency.isoCode }}"
+                         data-heidipay-lang="{{ page.header.activeLanguage.translationCode.code[:2]  }}"
+                         data-heidipay-type="PRODUCT_DESCRIPTION_HEIDIPAY_BNPL"
+                         data-heidipay-allowedterms="{{ config('Go2FlowHeyLightPayment.settings.heidiPromotionTerms')|join(',') }}"
+                         data-heidipay-apiKey="{{ config('Go2FlowHeyLightPayment.settings.heidiPromotionPublicApiKey') }}"
+                         data-heidipay-cadence="MONTHLY"
+                         data-heidipay-thousandsSeparator="."
+                         data-heidipay-decimalSeparator=","
+                         data-heidipay-symbolOnLeft="false"
+                         data-heidipay-spaceBetweenAmountAndSymbol="true"
+                         data-heidipay-decimalDigits="2"></div>
+                    {% endif %}
+                    {% if heidiPromotionProductMode == 1 or heidiPromotionProductMode == 2 %}
+                        <div id="heidipay-container" class="heidipay-container"
+                             data-heidipay="true"
+                             data-heidipay-minorAmount="{{ heidi_add_fee(summary.price.rawTotal * 100) }}"
+                             data-heidipay-term="{{ heidi_best_term(summary.price.rawTotal * 100) }}"
+                             data-heidipay-currencySymbol="{{  page.header.activeCurrency.isoCode }}"
+                             data-heidipay-lang="{{ page.header.activeLanguage.translationCode.code[:2]  }}"
+                             data-heidipay-type="PRODUCT_DESCRIPTION_HEIDIPAY_CREDIT"
+                             data-heidipay-allowedterms="{{ config('Go2FlowHeyLightPayment.settings.heidiPromotionTermsCredit')|join(',') }}"
+                             data-heidipay-apiKey="{{ config('Go2FlowHeyLightPayment.settings.heidiPromotionPublicApiKey') }}"
+                             data-heidipay-cadence="MONTHLY"
+                             data-heidipay-thousandsSeparator="."
+                             data-heidipay-decimalSeparator=","
+                             data-heidipay-symbolOnLeft="false"
+                             data-heidipay-spaceBetweenAmountAndSymbol="true"
+                             data-heidipay-decimalDigits="2"></div>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+
+{% endblock %}

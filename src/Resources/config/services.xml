@@ -1,0 +1,88 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <service id="Go2FlowHeyLightPayment\Controller\SettingsController" public="true">
+            <argument type="service" id="service_container" />
+            <argument type="service" id="Go2FlowHeyLightPayment\Service\HeyLightApiService" />
+            <argument type="service" id="monolog.logger.g2f_heylight_payment_plugin"/>
+        </service>
+        <service id="Go2FlowHeyLightPayment\Controller\WebhookController" public="true">
+            <argument type="service" id="service_container" />
+            <argument type="service" id="order.repository" />
+            <argument type="service" id="Go2FlowHeyLightPayment\Handler\TransactionHandler" />
+            <argument type="service" id="Go2FlowHeyLightPayment\Service\WebhookService" />
+        </service>
+        <service id="Go2FlowHeyLightPayment\Controller\OrderController" public="true">
+            <argument type="service" id="service_container" />
+            <argument type="service" id="Go2FlowHeyLightPayment\Service\OrderService" />
+            <argument type="service" id="monolog.logger.g2f_heylight_payment_plugin"/>
+        </service>
+
+        <service id="Go2FlowHeyLightPayment\Handler\PaymentHandler">
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
+            <argument type="service" id="service_container" />
+            <argument type="service" id="Go2FlowHeyLightPayment\Service\HeyLightApiService" />
+            <argument type="service" id="Go2FlowHeyLightPayment\Handler\TransactionHandler" />
+            <argument type="service" id="monolog.logger.g2f_heylight_payment_plugin"/>
+            <tag name="shopware.payment.method.async" />
+        </service>
+
+        <service id="Go2FlowHeyLightPayment\Handler\TransactionHandler">
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
+            <argument type="service" id="service_container" />
+            <argument type="service" id="monolog.logger.g2f_heylight_payment_plugin"/>
+        </service>
+
+        <service id="Go2FlowHeyLightPayment\Templating\TwigExtension">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <tag name="twig.extension"/>
+        </service>
+
+        <service id="Go2FlowHeyLightPayment\Service\HeyLightApiService" class="Go2FlowHeyLightPayment\Service\HeyLightApiService">
+            <argument type="service" id="monolog.logger.g2f_heylight_payment_plugin"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="Go2FlowHeyLightPayment\Service\WebhookService" />
+        </service>
+
+        <service id="Go2FlowHeyLightPayment\Service\OrderService" class="Go2FlowHeyLightPayment\Service\OrderService">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="Go2FlowHeyLightPayment\Service\HeyLightApiService" />
+            <argument type="service" id="Go2FlowHeyLightPayment\Handler\TransactionHandler" />
+        </service>
+
+        <service id="Go2FlowHeyLightPayment\Service\WebhookService" class="Go2FlowHeyLightPayment\Service\WebhookService">
+            <argument type="service" id="g2f_heylight_webhook_token.repository"/>
+        </service>
+
+        <service id="Go2FlowHeyLightPayment\Service\ScheduledTask\OrderTask">
+            <tag name="shopware.scheduled.task" />
+        </service>
+
+        <service id="Go2FlowHeyLightPayment\Service\ScheduledTask\OrderTaskHandler">
+            <argument type="service" id="scheduled_task.repository" />
+            <argument type="service" id="Go2FlowHeyLightPayment\Service\OrderService" />
+            <tag name="messenger.message_handler" />
+        </service>
+
+        <service id="Go2FlowHeyLightPayment\Service\Command\HeylightCheckOrderStatus">
+            <argument type="service" id="Go2FlowHeyLightPayment\Service\OrderService" />
+            <tag name="console.command"/>
+        </service>
+
+        <service id="Go2FlowHeyLightPayment\Subscriber\OrderDeliverySubscriber">
+            <argument type="service" id="order_delivery.repository"/>
+            <argument type="service" id="Go2FlowHeyLightPayment\Service\HeyLightApiService" />
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Go2FlowHeyLightPayment\Core\Content\WebhookTokens\WebhookTokenDefinition">
+            <tag name="shopware.entity.definition" entity="g2f_heylight_webhook_token" />
+        </service>
+
+    </services>
+</container>
