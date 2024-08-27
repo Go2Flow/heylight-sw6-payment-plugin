@@ -30,7 +30,7 @@ Shopware.Component.override('sw-order-list', {
                     return (transaction.customFields && transaction.customFields.external_contract_uuid)
                 });
                 if (found) {
-                    return 'HP_'+order.orderNumber;
+                    return 'HL_'+order.orderNumber;
                 }
             }
 
