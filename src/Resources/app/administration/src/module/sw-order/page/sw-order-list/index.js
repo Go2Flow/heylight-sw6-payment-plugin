@@ -24,7 +24,7 @@ Shopware.Component.override('sw-order-list', {
             return columns;
         },
 
-        getheidiPayReference(order){
+        getExternalPayReference(order){
             if (order.transactions.length) {
                 let found = order.transactions.find(transaction => {
                     return (transaction.customFields && transaction.customFields.external_contract_uuid)

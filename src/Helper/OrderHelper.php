@@ -37,7 +37,7 @@ class OrderHelper {
 		$requestData = array(
 			'amount_format'       => 'DECIMAL',
 			'amount'              => [
-				'amount'   => self::getFormattedPrice( $templateFunctions->heidiAddFee( $order->getAmountTotal() ) ),
+				'amount'   => self::getFormattedPrice( $templateFunctions->addFee( $order->getAmountTotal() ) ),
 				'currency' => $order->getCurrency()->getIsoCode(),
             ],
 			'redirect_urls'       => [
@@ -85,9 +85,9 @@ class OrderHelper {
         $templateFunctions = new TwigExtension($configService);
 		$items = [];
 		foreach ( $order->getLineItems()->getElements() as $item ) {
-            $widget_min_instalment = $configService->get('Go2FlowHeyLightPayment.settings.heidiPromotionWidgetMinInstalment', $salesChannelContext->getSalesChannelId());
+            $widget_min_instalment = $configService->get('Go2FlowHeyLightPayment.settings.promotionWidgetMinInstalment', $salesChannelContext->getSalesChannelId());
             $minimumInstalmentPrice = (! empty($widget_min_instalment) ? (float) $widget_min_instalment : 1);
-            $availableTerms = $templateFunctions->getAvailableTerms($terms, $templateFunctions->heidiAddFee( $order->getAmountTotal() ), $minimumInstalmentPrice);
+            $availableTerms = $templateFunctions->getAvailableTerms($terms, $templateFunctions->addFee( $order->getAmountTotal() ), $minimumInstalmentPrice);
 
 			$tmp = [
 				'sku'           => $item->getPayload()['productNumber'] ?? '',

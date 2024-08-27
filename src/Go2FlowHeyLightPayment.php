@@ -73,18 +73,18 @@ class Go2FlowHeyLightPayment extends Plugin
 
         //set the specified values as defaults
         // This is the standard Sandbox API Key from Heidipay which is public, so no need to worry
-        $config->set('Go2FlowHeyLightPayment.settings.heidiSecretKey', "5f6b49230c80f8b894e27b528a063acdac887ceb");
-        $config->set('Go2FlowHeyLightPayment.settings.heidiMode', "0");
-        $config->set('Go2FlowHeyLightPayment.settings.heidiPromotionShowOnProduct', "1");
-        $config->set('Go2FlowHeyLightPayment.settings.heidiPromotionShowOnCart', "1");
-        $config->set('Go2FlowHeyLightPayment.settings.heidiPromotionWidgetFee', 0);
-        $config->set('Go2FlowHeyLightPayment.settings.heidiPromotionProductMode', "0");
-        $config->set('Go2FlowHeyLightPayment.settings.heidiPromotionWidgetMinAmount', 0);
-        $config->set('Go2FlowHeyLightPayment.settings.heidiPromotionWidgetMinInstalment', 1);
-        $config->set('Go2FlowHeyLightPayment.settings.heidiPromotionTerms', ["3", "6"]);
-        $config->set('Go2FlowHeyLightPayment.settings.heidiPromotionTermsCredit', ["12"]);
-        $config->set('Go2FlowHeyLightPayment.settings.heidiPromotionPublicApiKey', "-");
-        $config->set('Go2FlowHeyLightPayment.settings.heidiMaximumOrderValue', 1000);
+        $config->set('Go2FlowHeyLightPayment.settings.secretKey', "5f6b49230c80f8b894e27b528a063acdac887ceb");
+        $config->set('Go2FlowHeyLightPayment.settings.mode', "0");
+        $config->set('Go2FlowHeyLightPayment.settings.promotionShowOnProduct', "1");
+        $config->set('Go2FlowHeyLightPayment.settings.promotionShowOnCart', "1");
+        $config->set('Go2FlowHeyLightPayment.settings.promotionWidgetFee', 0);
+        $config->set('Go2FlowHeyLightPayment.settings.promotionProductMode', "0");
+        $config->set('Go2FlowHeyLightPayment.settings.promotionWidgetMinAmount', 0);
+        $config->set('Go2FlowHeyLightPayment.settings.promotionWidgetMinInstalment', 1);
+        $config->set('Go2FlowHeyLightPayment.settings.promotionTerms', ["3", "6"]);
+        $config->set('Go2FlowHeyLightPayment.settings.promotionTermsCredit', ["12"]);
+        $config->set('Go2FlowHeyLightPayment.settings.promotionPublicApiKey', "-");
+        $config->set('Go2FlowHeyLightPayment.settings.maximumOrderValue', 1000);
         $this->getInstaller()->install($installContext);
         parent::install($installContext);
     }
@@ -133,10 +133,10 @@ class Go2FlowHeyLightPayment extends Plugin
         /** @var SystemConfigService $config */
         $config = $this->container->get(SystemConfigService::class);
         if (\version_compare($updateContext->getCurrentPluginVersion(), '1.2.0', '<')) {
-            $config->set('Go2FlowHeyLightPayment.settings.heidiPromotionProductMode', "0");
+            $config->set('Go2FlowHeyLightPayment.settings.promotionProductMode', "0");
         }
         if (\version_compare($updateContext->getCurrentPluginVersion(), '1.3.0', '<')) {
-            $config->set('Go2FlowHeyLightPayment.settings.heidiPromotionTermsCredit', ["12"]);
+            $config->set('Go2FlowHeyLightPayment.settings.promotionTermsCredit', ["12"]);
         }
         $this->getInstaller()->update($updateContext);
         parent::update($updateContext);

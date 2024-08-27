@@ -24,15 +24,15 @@ class TwigExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('heidi_best_term', [$this, 'heidiBestTerm']),
-            new TwigFunction('heidi_add_fee', [$this, 'heidiAddFee']),
+            new TwigFunction('heylight_best_term', [$this, 'bestTerm']),
+            new TwigFunction('heylight_add_fee', [$this, 'addFee']),
         ];
     }
 
-    public function heidiBestTerm($price)
+    public function bestTerm($price)
     {
-        $terms = $this->configService->get('Go2FlowHeyLightPayment.settings.heidiPromotionTerms', null);
-        $minInstalment = $this->configService->get('Go2FlowHeyLightPayment.settings.heidiPromotionWidgetMinInstalment', null);
+        $terms = $this->configService->get('Go2FlowHeyLightPayment.settings.promotionTerms', null);
+        $minInstalment = $this->configService->get('Go2FlowHeyLightPayment.settings.promotionWidgetMinInstalment', null);
 
 
         if(!is_array($terms)) {
@@ -56,9 +56,9 @@ class TwigExtension extends AbstractExtension
         return false;
     }
 
-    public function heidiAddFee($minorAmount)
+    public function addFee($minorAmount)
     {
-        $fee = $this->configService->get('Go2FlowHeyLightPayment.settings.heidiPromotionWidgetFee', null);
+        $fee = $this->configService->get('Go2FlowHeyLightPayment.settings.promotionWidgetFee', null);
         $fee = (!empty($fee) ? (float) str_replace(',', '.', $fee) : 0);
         if ($fee > 0) {
             $minorAmount = round($minorAmount + ($minorAmount * ($fee / 100)));

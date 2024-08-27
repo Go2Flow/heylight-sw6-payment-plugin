@@ -25,8 +25,8 @@ cp -rp DESCRIPTION.md Archive/tmp/Go2FlowHeyLightPayment/
 cp -rp DESCRIPTION_de-DE.md Archive/tmp/Go2FlowHeyLightPayment/
 cd Archive/tmp/
 echo
-zip -r Go2FlowHeidiPayPayment-SW$2-P$1.zip . -x '**/.*' -x '**/__MACOSX'
-mv Go2FlowHeidiPayPayment-SW$2-P$1.zip ../
+zip -r Go2FlowHeyLightPayment-SW$2-P$1.zip . -x '**/.*' -x '**/__MACOSX'
+mv Go2FlowHeyLightPayment-SW$2-P$1.zip ../
 #rm -rf ./*
 cd ../
 cd ../

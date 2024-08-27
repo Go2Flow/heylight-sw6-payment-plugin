@@ -12,7 +12,7 @@
 
         function loadHeyLight() {
             let script = document.createElement('script');
-            {% if config('Go2FlowHeyLightPayment.settings.heidiMode') == 1 %}
+            {% if config('Go2FlowHeyLightPayment.settings.mode') == 1 %}
             script.src = 'https://upstream.heidipay.com/sdk/heidi-upstream-lib.js';
             {% else %}
             script.src = 'https://sbx-upstream.heidipay.io/sdk/heidi-upstream-lib.js';

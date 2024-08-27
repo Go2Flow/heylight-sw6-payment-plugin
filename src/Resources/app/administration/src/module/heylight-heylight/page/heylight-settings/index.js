@@ -19,15 +19,15 @@ Component.register('heylight-settings', {
             isTesting: false,
             isSaveSuccessful: false,
             isTestSuccessful: false,
-            HeidiSecretKey: false,
+            secretKey: false,
             isSupportModalOpen: false,
             validations: {
-                'heidiSecretKey': {required: true},
-                'heidiPromotionPublicApiKey': {required: true},
-                'heidiPromotionWidgetFee': {required: true},
-                'heidiPromotionProductMode': {required: true},
-                'heidiPromotionTerms': {required: true},
-                'heidiPromotionTermsCredit': {required: true},
+                'secretKey': {required: true},
+                'promotionPublicApiKey': {required: true},
+                'romotionWidgetFee': {required: true},
+                'promotionProductMode': {required: true},
+                'promotionTerms': {required: true},
+                'promotionTermsCredit': {required: true},
             },
         }
     },
@@ -57,7 +57,7 @@ Component.register('heylight-settings', {
             this.isTesting = true;
             this.isTestSuccessful = false;
 
-            let credentials = this.getConfigValue('heidiSecretKey');
+            let credentials = this.getConfigValue('secretKey');
 
             this.HeyLightSettingsService.validateApiCredentials(credentials).then((response) => {
                 const credentialsValid = response.credentialsValid;

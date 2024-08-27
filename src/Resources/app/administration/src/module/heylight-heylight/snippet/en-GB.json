@@ -13,12 +13,12 @@
             "attentionText": "For the plugin to work, all *mandatory fields must be filled in and the correct address data must be stored.",
             "descriptionWebservice": "The Client Secret Key will be assigned and sent to you directly by HeyLight. If you have not yet requested or received them, you can order them at the following link: ",
             "fields": {
-                "heidiSecretKey": "Secret API Key",
-                "heidiPromotionPublicApiKey": "Public API Key",
-                "heidiPromotionWidgetFee": "Display price",
-                "heidiPromotionProductMode": "Promotion Product",
-                "heidiPromotionTerms": "Number of Instalments (BNPL)",
-                "heidiPromotionTermsCredit": "Number of Instalments (Credit)"
+                "secretKey": "Secret API Key",
+                "promotionPublicApiKey": "Public API Key",
+                "promotionWidgetFee": "Display price",
+                "promotionProductMode": "Promotion Product",
+                "promotionTerms": "Number of Instalments (BNPL)",
+                "promotionTermsCredit": "Number of Instalments (Credit)"
             },
             "messages": {
                 "required": "{field} must not be empty.",

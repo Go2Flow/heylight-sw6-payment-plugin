@@ -102,7 +102,7 @@ class HeyLightApiService
     }
 
     private function getAuthTransactionToken(string $salesChannelContextId = null) {
-        $merchant_key = $this->getConfigValueByChannelId( 'heidiSecretKey' , $salesChannelContextId );
+        $merchant_key = $this->getConfigValueByChannelId( 'secretKey' , $salesChannelContextId );
 
         if ( ! $merchant_key ) return false;
 
@@ -156,7 +156,7 @@ class HeyLightApiService
 
     private function getApiUrl(string $salesChannelId = null): string
     {
-        $mode = $this->getConfigValueByChannelId( 'heidiMode' , $salesChannelId );
+        $mode = $this->getConfigValueByChannelId( 'mode' , $salesChannelId );
         if($mode != '1') {
             return PaymentHandler::SANDBOX_BASE_URL.'/';
         }
@@ -171,10 +171,10 @@ class HeyLightApiService
             $paymentMethod = $order->getTransactions()->last()->getPaymentMethod()->getTechnicalName();
             if ($paymentMethod === (PaymentHandler::PAYMENT_METHOD_PREFIX.PaymentMethodInstaller::HEYLIGHT_CREDIT_METHOD)) {
                 $productType = 'CREDIT';
-                $terms = $this->getConfigValue( 'heidiPromotionTermsCredit' , $salesChannelContext );
+                $terms = $this->getConfigValue( 'promotionTermsCredit' , $salesChannelContext );
             } else {
                 $productType = 'BNPL';
-                $terms = $this->getConfigValue( 'heidiPromotionTerms' , $salesChannelContext );
+                $terms = $this->getConfigValue( 'promotionTerms' , $salesChannelContext );
             }
             $webhookToken = $this->webhookService->createToken($order->getId(), $salesChannelContext->getContext(), WebhookService::ACTION_STATUS);
 
