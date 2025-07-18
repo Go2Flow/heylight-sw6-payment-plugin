@@ -7,22 +7,21 @@ namespace Go2FlowHeyLightPayment\Handler;
 use Go2FlowHeyLightPayment\Helper\Transaction;
 use Go2FlowHeyLightPayment\Service\HeyLightApiService;
 use Psr\Log\LoggerInterface;
-use Shopware\Core\Checkout\Order\OrderEntity;
+use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStates;
-use Shopware\Core\Checkout\Cart\Price\Struct\CartPrice;
+use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\AbstractPaymentHandler;
+use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\PaymentHandlerType;
+use Shopware\Core\Checkout\Payment\Cart\PaymentTransactionStruct;
 use Shopware\Core\Checkout\Payment\PaymentException;
+use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\Struct\Struct;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
-use Shopware\Core\Checkout\Payment\Cart\AsyncPaymentTransactionStruct;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
-use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\AsynchronousPaymentHandlerInterface;
 
-class PaymentHandler implements AsynchronousPaymentHandlerInterface
+class PaymentHandler extends AbstractPaymentHandler
 {
 
     const PAYMENT_METHOD_PREFIX = 'heylight_';
@@ -75,21 +74,18 @@ class PaymentHandler implements AsynchronousPaymentHandlerInterface
         $this->logger = $logger;
     }
 
-    /**
-     * Redirects to the payment page
-     *
-     * @param AsyncPaymentTransactionStruct $transaction
-     * @param RequestDataBag $dataBag
-     * @param SalesChannelContext $salesChannelContext
-     * @return RedirectResponse
-     */
-    public function pay(AsyncPaymentTransactionStruct $transaction, RequestDataBag $dataBag, SalesChannelContext $salesChannelContext): RedirectResponse
+
+    public function pay(
+        Request $request,
+        PaymentTransactionStruct $transaction,
+        Context $context,
+        ?Struct $validateStruct
+    ): RedirectResponse
     {
-        $orderTransaction = $transaction->getOrderTransaction();
-        $order = $transaction->getOrder();
+        $orderTransaction = $this->getOrderTransaction($transaction->getOrderTransactionId(), $context);
+        $order = $orderTransaction->getOrder();
         $totalAmount = $orderTransaction->getAmount()->getTotalPrice();
         $transactionId = $orderTransaction->getId();
-        $productRepository = $this->container->get('product.repository');
 
         // Workaround if amount is 0
         if ($totalAmount <= 0) {
@@ -101,13 +97,13 @@ class PaymentHandler implements AsynchronousPaymentHandlerInterface
         try {
             $gateway = $this->heyLightApiService->processPayment(
                 $order,
+                $orderTransaction->getPaymentMethod(),
                 $transaction->getReturnUrl(),
-                $productRepository,
-                $salesChannelContext
+                $context
             );
 
             $this->transactionHandler->saveTransactionCustomFields(
-                $salesChannelContext,
+                $context,
                 $transactionId,
                 [ 'external_contract_uuid' => $gateway['external_contract_uuid'] ]
             );
@@ -123,23 +119,17 @@ class PaymentHandler implements AsynchronousPaymentHandlerInterface
         return new RedirectResponse($redirectUrl);
     }
 
-    /**
-     * @param AsyncPaymentTransactionStruct $transaction
-     * @param Request $request
-     * @param SalesChannelContext $salesChannelContext
-     */
-    public function finalize(AsyncPaymentTransactionStruct $transaction, Request $request, SalesChannelContext $salesChannelContext): void
+    public function finalize(
+        Request $request,
+        PaymentTransactionStruct $transaction,
+        Context $context
+    ): void
     {
-        $context = $salesChannelContext->getContext();
-
-        $heyLightTransactionStatus = OrderTransactionStates::STATE_OPEN;
-
-        $orderTransaction = $transaction->getOrderTransaction();
+        $orderTransaction = $this->getOrderTransaction($transaction->getOrderTransactionId(), $context);
         $stateMachineState = $orderTransaction->getStateMachineState();
         if (!$stateMachineState) {
-            $stateMachineState = $this->transactionHandler->getStateMachineState($orderTransaction->getStateId(), $salesChannelContext->getContext());
+            $stateMachineState = $this->transactionHandler->getStateMachineState($orderTransaction->getStateId(), $context);
         }
-
 
         $customFields = $orderTransaction->getCustomFields();
         $externalContractUuid = $customFields['external_contract_uuid'];
@@ -147,142 +137,43 @@ class PaymentHandler implements AsynchronousPaymentHandlerInterface
         $totalAmount = $orderTransaction->getAmount()->getTotalPrice();
 
         if ($totalAmount <= 0) {
-            if (OrderTransactionStates::STATE_PAID === $stateMachineState->getTechnicalName()) return;
-            $this->transactionStateHandler->paid($orderTransaction->getId(), $context);
-            return;
-        }
-
-        if (empty($transactionId)) {
-            throw PaymentException::customerCanceled(
-                $transactionId,
-                'Customer canceled the payment on the HeyLight page'
-            );
-        }
-
-        $orderStatus = $this->heyLightApiService->checkOrderStatus( $externalContractUuid, $salesChannelContext );
-
-
-
-        if ( ( !$externalContractUuid || !$orderStatus ) && $totalAmount > 0) {
-            throw PaymentException::customerCanceled(
-                $transactionId,
-                'Customer canceled the payment on the HeyLight page'
-            );
-        }
-
-        if ($totalAmount <= 0 || $orderStatus == true) {
-            $heyLightTransactionStatus = Transaction::CONFIRMED;
-        }
-
-        $this->transactionHandler->handleTransactionStatus($orderTransaction, $heyLightTransactionStatus, $context);
-
-        if (!in_array($heyLightTransactionStatus, [Transaction::CANCELLED, Transaction::DECLINED, Transaction::EXPIRED, Transaction::ERROR])){
-            return;
-        }
-        throw PaymentException::customerCanceled(
-            $transactionId,
-            'Customer canceled the payment on the HeyLight page'
-        );
-    }
-
-    /**
-     * @param OrderEntity $order
-     * @param $totalAmount
-     * @param $salesChannelContext
-     * @return array
-     */
-    private function collectBasketData(OrderEntity $order, $totalAmount, $salesChannelContext):array
-    {
-        // Collect basket data
-        $basketTotal = 0;
-        $basket = [];
-
-        $lineItemElements = [];
-        if ($order->getLineItems()) {
-            $lineItemElements = $order->getLineItems()->getElements();
-        }
-        foreach ($lineItemElements as $item) {
-            $unitPrice = $item->getUnitPrice();
-            $quantity = $item->getQuantity();
-
-            $basket[] = [
-                'name' => $item->getLabel(),
-                'description' => $item->getDescription(),
-                'quantity' => $item->getQuantity(),
-                'amount' => $unitPrice * 100,
-                'sku' => $item->getPayload()['productNumber'] ?? '',
-            ];
-            $basketTotal += $unitPrice * $quantity;
-        }
-
-        $shippingMethodRepo = $this->container->get('shipping_method.repository');
-
-        $deliveryElements = [];
-        if ($order->getDeliveries()) {
-            $deliveryElements = $order->getDeliveries()->getElements();
-        }
-        foreach ($deliveryElements as $delivery) {
-            $shippingCriteria = (new Criteria())->addFilter(
-                new EqualsFilter('id', $delivery->getShippingMethodId())
-            );
-            $shippingMethod = $shippingMethodRepo->search($shippingCriteria, $salesChannelContext->getContext())->first();
-
-            $unitPrice = $delivery->getShippingCosts()->getUnitPrice() ;
-            $quantity = $delivery->getShippingCosts()->getQuantity();
-
-            $basket[] = [
-                'name' => $shippingMethod->getTranslated()['name'] ?: $shippingMethod->getName(),
-                'description' => $shippingMethod->getTranslated()['description'] ?: $shippingMethod->getDescription(),
-                'quantity' => $quantity,
-                'amount' => $unitPrice * 100,
-                'sku' => $shippingMethod->getId(),
-            ];
-            $basketTotal += $unitPrice * $quantity;
-        }
-
-        $taxElements = [];
-        if ($order->getPrice() && $order->getPrice()->getCalculatedTaxes()) {
-            $taxElements = $order->getPrice()->getCalculatedTaxes();
-        }
-        if ($order->getTaxStatus() === CartPrice::TAX_STATE_NET) {
-            foreach ($taxElements as $tax) {
-                $unitPrice = $tax->getTax();
-                $quantity = 1;
-                $basket[] = [
-                    'name' => 'Tax ' . $tax->getTaxRate() . '%',
-                    'quantity' => $quantity,
-                    'amount' => $unitPrice * 100,
-                ];
-                $basketTotal += $unitPrice;
+            if (OrderTransactionStates::STATE_PAID !== $stateMachineState->getTechnicalName()) {
+                $this->transactionStateHandler->paid($orderTransaction->getId(), $context);
             }
+            return;
         }
 
-        if ($totalAmount !== $basketTotal) {
-            return [];
+        $orderStatus = $this->heyLightApiService->checkOrderStatus($externalContractUuid, $orderTransaction->getOrder()->getSalesChannelId() );
+
+        if (!$externalContractUuid || !$orderStatus) {
+            throw PaymentException::customerCanceled(
+                $transactionId,
+                'Customer canceled the payment on the HeyLight page'
+            );
         }
 
-        return $basket;
+        $this->transactionHandler->handleTransactionStatus($orderTransaction, Transaction::CONFIRMED, $context);
     }
 
-    /**
-     * @param OrderEntity $order
-     * @return float
-     */
-    private function getAverageTaxRate(OrderEntity $order): float
+    public function supports(PaymentHandlerType $type, string $paymentMethodId, Context $context): bool
     {
-        if (!$order->getPrice() || !$order->getPrice()->getCalculatedTaxes()) {
-            return 0;
-        }
+        return false;
+    }
 
-        $taxRate = 0;
-        $finalTaxRate = 0;
-        $taxElements = $order->getPrice()->getCalculatedTaxes();
-
-        if (!count($taxElements)) return $finalTaxRate;
-        foreach ($taxElements as $tax) {
-            $taxRate += $tax->getTaxRate();
-        }
-
-        return ($taxRate / count($taxElements));
+    private function getOrderTransaction(string $transactionId, Context $context): OrderTransactionEntity
+    {
+        $orderTransactionRepository = $this->container->get('order_transaction.repository');
+        $criteria = new Criteria([$transactionId]);
+        $criteria->addAssociations([
+            'order',
+            'order.orderCustomer',
+            'order.billingAddress',
+            'order.lineItems',
+            'order.currency',
+            'order.salesChannel.domains',
+            'stateMachineState',
+            'paymentMethod'
+        ]);
+        return $orderTransactionRepository->search($criteria, $context)->first();
     }
 }

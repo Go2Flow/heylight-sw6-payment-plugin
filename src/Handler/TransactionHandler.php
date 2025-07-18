@@ -47,20 +47,15 @@ class TransactionHandler
         $this->logger = $logger;
     }
 
-    /**
-     * @param $salesChannelContext
-     * @param $transactionId
-     * @param $details
-     */
-    public function saveTransactionCustomFields($salesChannelContext, $transactionId, $details): void
+    public function saveTransactionCustomFields(Context $context, string $transactionId, array $details): void
     {
         $transactionRepo = $this->container->get('order_transaction.repository');
         $transactionRepo->upsert([[
             'id' => $transactionId,
             'customFields' => $details
-        ]], $salesChannelContext->getContext());
+        ]], $context);
     }
-    public function getStateMachineState(string $stateId, $context): ?StateMachineStateEntity
+    public function getStateMachineState(string $stateId, Context $context): ?StateMachineStateEntity
     {
         $repo = $this->container->get('state_machine_state.repository');
         $criteria = new Criteria();
