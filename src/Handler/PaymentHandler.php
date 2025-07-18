@@ -167,7 +167,7 @@ class PaymentHandler extends AbstractPaymentHandler
         $criteria->addAssociations([
             'order',
             'order.orderCustomer',
-            'order.billingAddress',
+            'order.billingAddress.country',
             'order.lineItems',
             'order.currency',
             'order.salesChannel.domains',

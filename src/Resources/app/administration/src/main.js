@@ -11,8 +11,6 @@ Application.addServiceProvider(
     (container) => new HeyLightAPIService(initContainer.httpClient, container.loginService),
 );
 
-import "./init/svgs";
-
 import './module/heylight-heylight';
 
 import './module/sw-order/page/sw-order-list';

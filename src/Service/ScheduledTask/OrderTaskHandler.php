@@ -36,6 +36,7 @@ class OrderTaskHandler extends ScheduledTaskHandler
         $logger = new Logger('heylight-status-cronjob');
         $logger->pushHandler(new StreamHandler(__DIR__ . '/heylight-status-cronjob.log'));
         $this->logger = $logger;
+        parent::__construct($this->scheduledTaskRepository, $this->logger);
     }
 
     public function run(): void
